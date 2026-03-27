@@ -1,0 +1,23 @@
+# Redactosaurus NER Dependencies
+# Microsoft Presidio with spaCy for local PII detection
+# 
+# IMPORTANT: This is a LOCAL-ONLY configuration
+# - NO Hugging Face models (transformers disabled)
+# - NO Stanza models (not installed)
+# - NO cloud recognizers (only local pattern-based and spaCy NER)
+# - spaCy model (en_core_web_md) must be downloaded separately
+
+# Core Presidio for PII detection
+presidio-analyzer==2.2.354
+
+# spaCy for NER (Natural Language Processing)
+# The actual model (en_core_web_md) is downloaded via: python -m spacy download en_core_web_md
+spacy>=3.7.0,<4.0.0
+
+# DO NOT install these (they enable auto-downloads and remote models):
+# transformers - NOT NEEDED (we use spaCy only)
+# stanza - NOT NEEDED (we use spaCy only)
+# torch/tensorflow - NOT NEEDED (spaCy models don't require them)
+
+# Note: presidio-analyzer may have transitive dependencies
+# but those are managed by pip and don't enable remote model loading
