@@ -12,6 +12,11 @@ import os
 os.environ['HF_DATASETS_OFFLINE'] = '1'  # Disable Hugging Face auto-download
 os.environ['TRANSFORMERS_OFFLINE'] = '1'  # Disable transformers auto-download
 os.environ['HF_HUB_OFFLINE'] = '1'  # Disable Hugging Face Hub
+# Keep tldextract cache local and writable to avoid lock issues in restricted runtimes.
+os.environ.setdefault(
+    'TLDEXTRACT_CACHE',
+    os.path.join(os.path.dirname(__file__), '.tldextract_cache')
+)
 
 
 def detect_pii(text):
@@ -132,8 +137,12 @@ def detect_pii(text):
             'IT_IDENTITY_CARD',
         }
         
-        # Minimum confidence threshold to reduce false positives
-        MIN_CONFIDENCE = 0.5
+        # Minimum confidence thresholds to reduce false positives while
+        # preserving common valid detections which can score lower.
+        MIN_CONFIDENCE_DEFAULT = 0.5
+        MIN_CONFIDENCE_BY_TYPE = {
+            "PHONE_NUMBER": 0.4,
+        }
         
         # Convert Presidio results to our format with filtering
         entities = []
@@ -142,8 +151,11 @@ def detect_pii(text):
             if result.entity_type in EXCLUDED_TYPES:
                 continue
             
-            # Skip low confidence detections
-            if result.score < MIN_CONFIDENCE:
+            # Skip low confidence detections (with per-entity overrides)
+            min_confidence = MIN_CONFIDENCE_BY_TYPE.get(
+                result.entity_type, MIN_CONFIDENCE_DEFAULT
+            )
+            if result.score < min_confidence:
                 continue
             
             # Additional filtering for overly generic DATE_TIME detections
